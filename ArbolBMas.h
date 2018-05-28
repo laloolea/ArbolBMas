@@ -27,5 +27,35 @@ private:
     Cola<Nodo*> hojas;
 };
 
+template<typename Tipo>
+ArbolBMas<Tipo>::ArbolBMas () {
+
+}
+
+template<typename Tipo>
+ArbolBMas<Tipo>::ArbolBMas (const ArbolBMas<Tipo> &a) {
+    *this= a;
+}
+
+template<typename Tipo>
+ArbolBMas<Tipo> &ArbolBMas<Tipo>::operator= (const ArbolBMas<Tipo> &a) {
+    return <#initializer#>;
+}
+
+template<typename Tipo>
+ArbolBMas<Tipo>::~ArbolBMas () {
+    Vaciar();
+}
+
+template<typename Tipo>
+void ArbolBMas<Tipo>::Vaciar () {
+    raiz->Vaciar ();
+}
+
+template<typename Tipo>
+bool ArbolBMas<Tipo>::EstaVacio () {
+    return raiz== NULL;
+}
+
 
 #endif //PROYECTO_ARBOLINB_ARBOLB_H
