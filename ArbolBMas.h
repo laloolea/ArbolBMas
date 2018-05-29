@@ -5,7 +5,7 @@
 #ifndef PROYECTO_ARBOLINB_ARBOLB_H
 #define PROYECTO_ARBOLINB_ARBOLB_H
 
-#include "Cola.h"
+#include "ListaSimpleOrdenada.h"
 #include "Nodo.h"
 
 
@@ -24,7 +24,6 @@ public:
 private:
     int grado;
     Nodo *raiz;
-    Cola<Nodo*> hojas;
 };
 
 template<typename Tipo>
@@ -50,11 +49,12 @@ ArbolBMas<Tipo>::~ArbolBMas () {
 template<typename Tipo>
 void ArbolBMas<Tipo>::Vaciar () {
     raiz->Vaciar ();
+    raiz = NULL;
 }
 
 template<typename Tipo>
 bool ArbolBMas<Tipo>::EstaVacio () {
-    return raiz== NULL;
+    return raiz == NULL;
 }
 
 

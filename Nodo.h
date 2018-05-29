@@ -23,13 +23,19 @@ public:
 
     bool AgregarElemento(Tipo _valor);
     bool EliminarElemento(Tipo _valor);
-
     bool AgregarPuntero(Nodo *&n);
     bool EliminarPuntero(int indice);
-
     void Vaciar();
+    void EstablecerPadre(Nodo &n);
+    void EstablecerSiguiente(Nodo &n);
+    void EstablecerHoja(bool estado);
+
     bool EstaVacio() const;
     bool EstaLleno();
+    int ObtenerNumElementos();
+    int ObtenerNumPunteros();
+    Tipo ObtenerElemento(int indice);
+
 
 //private:
     int numElementos;
@@ -39,28 +45,26 @@ public:
 
     Tipo *elementos;
     Nodo **punteros;
+    Nodo *padre;
+    Nodo *siguiente;
 
     void Ordenar();
+    bool operator<(const Nodo &n) const;
+    bool operator>(const Nodo &n) const;
+    bool operator<=(const Nodo &n) const;
+    bool operator>=(const Nodo &n) const;
+    bool operator==(const Nodo &n) const;
+    bool operator!=(const Nodo &n) const;
 };
 
+//----------------------------------------------------------------------------------------------------------------------
+//Metodos para buen funcionamiento
 template<typename Tipo>
-std::ostream &operator<<(std::ostream &salida , const Nodo<Tipo> &n) {
-    if(n.EstaVacio()){
-        return salida << "El nodo se encuentra deshabitado.";
-    }
-
-    for (int i = 0; i < n.numElementos; i ++) {
-        salida << n.elementos[i] << " , ";
-    }
-
-    salida << "\b\b\b  ";
-    return salida;
-}
-
-template<typename Tipo>
-Nodo<Tipo>::Nodo(int tamanio) : numElementos(0), numPunteros(0), capacidadElementos(tamanio),esHoja(true){
+Nodo<Tipo>::Nodo(int tamanio) : numElementos(0), numPunteros(0), capacidadElementos(tamanio), esHoja(true),{
     elementos = new Tipo[tamanio];
     punteros = new Nodo*[tamanio];
+    padre = NULL;
+    siguiente = NULL;
 
     for(int i = 0; i < tamanio ; ++i){
         punteros[i] = NULL;
@@ -68,8 +72,7 @@ Nodo<Tipo>::Nodo(int tamanio) : numElementos(0), numPunteros(0), capacidadElemen
 }
 
 template<typename Tipo>
-Nodo<Tipo>::Nodo(const Nodo<Tipo> &n) : numElementos(0) , numPunteros(0) , capacidadElementos(0) , esHoja(true),
-elementos(NULL), punteros(NULL){
+Nodo<Tipo>::Nodo(const Nodo<Tipo> &n) : numElementos(0) , numPunteros(0) , capacidadElementos(0) , esHoja(true), elementos(NULL), punteros(NULL), padre(NULL), siguiente(NULL){
     *this = n;
 }
 
@@ -86,6 +89,8 @@ Nodo<Tipo> &Nodo<Tipo>::operator=(const Nodo<Tipo> &n) {
     elementos = new Tipo[n.capacidadElementos];
     punteros = new Nodo*[n.capacidadElementos];
     capacidadElementos = n.capacidadElementos;
+    padre = n.padre;
+    siguiente = n.siguiente;
 
     for(int i = 0; i < n.numElementos; ++i){
         AgregarElemento(n.elementos[i]);
@@ -102,6 +107,8 @@ Nodo<Tipo>::~Nodo() {
     Vaciar();
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+//Metodos de manejo
 template<typename Tipo>
 bool Nodo<Tipo>::AgregarElemento(Tipo _valor) {
     if(!EstaLleno()){
@@ -129,31 +136,10 @@ bool Nodo<Tipo>::EliminarElemento(Tipo _valor) {
 }
 
 template<typename Tipo>
-bool Nodo<Tipo>::EstaLleno() {
-    return numElementos == capacidadElementos;
-}
-
-template<typename Tipo>
-void Nodo<Tipo>::Ordenar() {
-    Tipo aux;
-    for(int i = 0 ; i < numElementos ; i++)
-        for(int j = 0 ; j < numElementos - 1 ; j++)
-            if(elementos[j] > elementos[j+1]){
-                aux = elementos[j];
-                elementos[j] = elementos[j+1];
-                elementos[j+1] = aux;
-            }
-}
-
-template<typename Tipo>
-bool Nodo<Tipo>::EstaVacio() const {
-    return numElementos == 0 && numPunteros == 0;
-}
-
-template<typename Tipo>
 bool Nodo<Tipo>::AgregarPuntero(Nodo<Tipo> *&n) {
     if(numPunteros < capacidadElementos){
         punteros[numPunteros] = n;
+        n->EstablecerPadre(*this);
         numPunteros++;
         return true;
     }else
@@ -168,8 +154,10 @@ bool Nodo<Tipo>::EliminarPuntero(int indice) {
     if(indice < 0 || indice >= numPunteros)
         return false;
 
-    delete [] punteros[indice];
-    punteros[indice] = NULL;
+    if(punteros[indice] != NULL){
+        punteros[indice]->Vaciar();
+        delete punteros[indice];
+    }
     numPunteros--;
     return true;
 }
@@ -194,7 +182,131 @@ void Nodo<Tipo>::Vaciar() {
     numPunteros = 0;
     capacidadElementos = 0;
     esHoja = true;
+    padre = NULL;
+    siguiente = NULL;
 }
 
+template<typename Tipo>
+void Nodo<Tipo>::EstablecerPadre(Nodo &n) {
+    padre = &n;
+}
+
+template<typename Tipo>
+void Nodo<Tipo>::EstablecerSiguiente(Nodo &n) {
+    siguiente = n.siguiente;
+}
+
+template<typename Tipo>
+void Nodo<Tipo>::EstablecerHoja(bool estado) {
+    esHoja = estado;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//Metodos de consulta
+
+template<typename Tipo>
+bool Nodo<Tipo>::EstaLleno() {
+    return numElementos == capacidadElementos;
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::EstaVacio() const {
+    return numElementos == 0 && numPunteros == 0;
+}
+
+template<typename Tipo>
+int Nodo<Tipo>::ObtenerNumElementos() {
+    return numElementos;
+}
+
+template<typename Tipo>
+int Nodo<Tipo>::ObtenerNumPunteros() {
+    return numPunteros;
+}
+
+template<typename Tipo>
+Tipo Nodo<Tipo>::ObtenerElemento(int indice) {
+    return elementos[indice];
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//Metodos de ultileria
+template<typename Tipo>
+void Nodo<Tipo>::Ordenar() {
+    Tipo aux;
+    for(int i = 0 ; i < numElementos ; i++)
+        for(int j = 0 ; j < numElementos - 1 ; j++)
+            if(elementos[j] > elementos[j+1]){
+                aux = elementos[j];
+                elementos[j] = elementos[j+1];
+                elementos[j+1] = aux;
+            }
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::operator<(const Nodo &n) const {
+    return (elementos[numElementos] < n.elementos[0]);
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::operator>(const Nodo &n) const {
+    return elementos[0] > n.elementos[numElementos];
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::operator<=(const Nodo &n) const {
+    return ! (n < *this);
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::operator>=(const Nodo &n) const {
+    return ! (*this < n);
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::operator==(const Nodo &n) const {
+    if(capacidadElementos != n.capacidadElementos)
+        return false;
+
+    if(esHoja != n.esHoja)
+        return false;
+
+    if(numElementos != n.numElementos)
+        return false;
+
+    if(numPunteros != n.numPunteros)
+        return false;
+
+    for(int i = 0; i < numElementos; i++)
+        if(elementos[i] != n.elementos[i])
+            return false;
+
+    for(int i = 0; i < numPunteros; i++)
+        if(punteros[i] != n.punteros[i])
+            return false;
+
+    return true;
+}
+
+template<typename Tipo>
+bool Nodo<Tipo>::operator!=(const Nodo &n) const {
+    return ! (*this == n);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//Metodos amigos
+template<typename Tipo>
+std::ostream &operator<<(std::ostream &salida , const Nodo<Tipo> &n) {
+    if(n.EstaVacio()){
+        return salida << "El nodo se encuentra deshabitado.";
+    }
+
+    for (int i = 0; i < n.numElementos; i ++) {
+        salida << n.elementos[i] << " , ";
+    }
+
+    salida << "\b\b\b  ";
+    return salida;
+}
 
 #endif //PROYECTO_ARBOLINB_NODO_H
